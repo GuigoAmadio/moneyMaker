@@ -138,14 +138,8 @@ export async function getAuthUser(): Promise<User | null> {
   } catch (error: any) {
     console.error('Erro ao verificar autenticação:', error)
 
-    // Se erro 401, limpar cookies
-    if (error.code === '401') {
-      const cookieStore = cookies()
-      cookieStore.delete('auth_token')
-      cookieStore.delete('refresh_token')
-      cookieStore.delete('client_id')
-    }
-
+    // NÃO deletar cookies aqui - apenas retornar null
+    // A limpeza deve ser feita em uma Server Action separada
     return null
   }
 }
@@ -219,5 +213,20 @@ export async function refreshTokenAction() {
       success: false,
       message: error.message || 'Erro ao renovar token',
     }
+  }
+}
+
+// Nova Server Action para limpar cookies quando há erro 401
+export async function clearAuthCookiesAction() {
+  try {
+    const cookieStore = cookies()
+    cookieStore.delete('auth_token')
+    cookieStore.delete('refresh_token')
+    cookieStore.delete('client_id')
+
+    redirect('/login')
+  } catch (error) {
+    console.error('Erro ao limpar cookies:', error)
+    redirect('/login')
   }
 }

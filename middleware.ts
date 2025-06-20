@@ -33,22 +33,12 @@ export function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // Em produção ou com auth habilitada, verificar token
-    if (!token || !clientId) {
-      console.log(
-        '❌ Token ou client_id não encontrado, redirecionando para login'
-      )
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    console.log('✅ Token encontrado, permitindo acesso ao dashboard')
+    // Em produção, sempre permitir que o dashboard se encarregue da validação
+    // Não verificar cookies aqui - deixar para o layout do dashboard
+    console.log(
+      '🔄 Permitindo acesso ao dashboard - validação será feita no layout'
+    )
     return NextResponse.next()
-  }
-
-  // Se está logado e tentando acessar login, redirecionar para dashboard
-  if (pathname === '/login' && token && clientId) {
-    console.log('🔄 Usuário já logado, redirecionando para dashboard')
-    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Permitir acesso a páginas públicas
