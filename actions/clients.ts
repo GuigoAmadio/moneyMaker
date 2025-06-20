@@ -1,25 +1,9 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import type { Client, ApiResponse } from '@/types'
 import type { ClientInput } from '@/lib/validations'
-
-const API_URL = process.env.API_URL || 'http://localhost:3001/api'
-
-// Função auxiliar para obter token
-function getAuthToken() {
-  return cookies().get('auth_token')?.value
-}
-
-// Função auxiliar para headers com auth
-function getAuthHeaders() {
-  const token = getAuthToken()
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  }
-}
+import { serverGet, serverPost, serverPut, serverDelete } from '@/lib/api'
 
 // Buscar todos os clientes
 export async function getClientsAction(): Promise<{
@@ -28,31 +12,18 @@ export async function getClientsAction(): Promise<{
   message: string
 }> {
   try {
-    const response = await fetch(`${API_URL}/clients`, {
-      headers: getAuthHeaders(),
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      return {
-        success: false,
-        message: error.message || 'Erro ao buscar clientes',
-      }
-    }
-
-    const result: ApiResponse<Client[]> = await response.json()
+    const result = await serverGet<Client[]>('/clients')
 
     return {
       success: true,
       data: result.data,
       message: 'Clientes carregados com sucesso',
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao buscar clientes:', error)
     return {
       success: false,
-      message: 'Erro interno do servidor',
+      message: error.message || 'Erro interno do servidor',
     }
   }
 }
@@ -64,31 +35,18 @@ export async function getClientAction(id: string): Promise<{
   message: string
 }> {
   try {
-    const response = await fetch(`${API_URL}/clients/${id}`, {
-      headers: getAuthHeaders(),
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      return {
-        success: false,
-        message: error.message || 'Erro ao buscar cliente',
-      }
-    }
-
-    const result: ApiResponse<Client> = await response.json()
+    const result = await serverGet<Client>(`/clients/${id}`)
 
     return {
       success: true,
       data: result.data,
       message: 'Cliente carregado com sucesso',
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao buscar cliente:', error)
     return {
       success: false,
-      message: 'Erro interno do servidor',
+      message: error.message || 'Erro interno do servidor',
     }
   }
 }
@@ -100,21 +58,7 @@ export async function createClientAction(data: ClientInput): Promise<{
   message: string
 }> {
   try {
-    const response = await fetch(`${API_URL}/clients`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      return {
-        success: false,
-        message: error.message || 'Erro ao criar cliente',
-      }
-    }
-
-    const result: ApiResponse<Client> = await response.json()
+    const result = await serverPost<Client>('/clients', data)
 
     // Revalidar cache da página de clientes
     revalidatePath('/dashboard/clientes')
@@ -124,11 +68,11 @@ export async function createClientAction(data: ClientInput): Promise<{
       data: result.data,
       message: 'Cliente criado com sucesso',
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao criar cliente:', error)
     return {
       success: false,
-      message: 'Erro interno do servidor',
+      message: error.message || 'Erro interno do servidor',
     }
   }
 }
@@ -143,21 +87,7 @@ export async function updateClientAction(
   message: string
 }> {
   try {
-    const response = await fetch(`${API_URL}/clients/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      return {
-        success: false,
-        message: error.message || 'Erro ao atualizar cliente',
-      }
-    }
-
-    const result: ApiResponse<Client> = await response.json()
+    const result = await serverPut<Client>(`/clients/${id}`, data)
 
     // Revalidar cache
     revalidatePath('/dashboard/clientes')
@@ -168,11 +98,11 @@ export async function updateClientAction(
       data: result.data,
       message: 'Cliente atualizado com sucesso',
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao atualizar cliente:', error)
     return {
       success: false,
-      message: 'Erro interno do servidor',
+      message: error.message || 'Erro interno do servidor',
     }
   }
 }
@@ -183,18 +113,7 @@ export async function deleteClientAction(id: string): Promise<{
   message: string
 }> {
   try {
-    const response = await fetch(`${API_URL}/clients/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      return {
-        success: false,
-        message: error.message || 'Erro ao deletar cliente',
-      }
-    }
+    await serverDelete(`/clients/${id}`)
 
     // Revalidar cache
     revalidatePath('/dashboard/clientes')
@@ -203,11 +122,59 @@ export async function deleteClientAction(id: string): Promise<{
       success: true,
       message: 'Cliente deletado com sucesso',
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao deletar cliente:', error)
     return {
       success: false,
-      message: 'Erro interno do servidor',
+      message: error.message || 'Erro interno do servidor',
     }
   }
-} 
+}
+
+// Buscar clientes com filtros e paginação
+export async function getClientsWithFiltersAction(params: {
+  page?: number
+  limit?: number
+  search?: string
+  status?: string
+}): Promise<{
+  success: boolean
+  data?: {
+    clients: Client[]
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+  message: string
+}> {
+  try {
+    const queryParams = new URLSearchParams()
+
+    if (params.page) queryParams.append('page', params.page.toString())
+    if (params.limit) queryParams.append('limit', params.limit.toString())
+    if (params.search) queryParams.append('search', params.search)
+    if (params.status) queryParams.append('status', params.status)
+
+    const url = `/clients?${queryParams.toString()}`
+    const result = await serverGet<{
+      clients: Client[]
+      total: number
+      page: number
+      limit: number
+      totalPages: number
+    }>(url)
+
+    return {
+      success: true,
+      data: result.data,
+      message: 'Clientes carregados com sucesso',
+    }
+  } catch (error: any) {
+    console.error('Erro ao buscar clientes:', error)
+    return {
+      success: false,
+      message: error.message || 'Erro interno do servidor',
+    }
+  }
+}

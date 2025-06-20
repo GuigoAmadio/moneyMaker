@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
 
 interface ScrollRevealProps {
@@ -30,44 +30,33 @@ export function ScrollReveal({
     restDelta: 0.001,
   })
 
-  const getTransform = () => {
+  // Transformações baseadas na direção
+  const yUp = useTransform(spring, [0, 1], [100, 0])
+  const yDown = useTransform(spring, [0, 1], [-100, 0])
+  const xLeft = useTransform(spring, [0, 1], [-100, 0])
+  const xRight = useTransform(spring, [0, 1], [100, 0])
+  const yDefault = useTransform(spring, [0, 1], [50, 0])
+  const opacity = useTransform(spring, [0, 0.2, 1], [0, 0, 1])
+
+  const getTransformStyle = () => {
     switch (direction) {
       case 'up':
-        return {
-          y: useTransform(spring, [0, 1], [100, 0]),
-          opacity: useTransform(spring, [0, 0.2, 1], [0, 0, 1]),
-        }
+        return { y: yUp, opacity }
       case 'down':
-        return {
-          y: useTransform(spring, [0, 1], [-100, 0]),
-          opacity: useTransform(spring, [0, 0.2, 1], [0, 0, 1]),
-        }
+        return { y: yDown, opacity }
       case 'left':
-        return {
-          x: useTransform(spring, [0, 1], [-100, 0]),
-          opacity: useTransform(spring, [0, 0.2, 1], [0, 0, 1]),
-        }
+        return { x: xLeft, opacity }
       case 'right':
-        return {
-          x: useTransform(spring, [0, 1], [100, 0]),
-          opacity: useTransform(spring, [0, 0.2, 1], [0, 0, 1]),
-        }
+        return { x: xRight, opacity }
       default:
-        return {
-          y: useTransform(spring, [0, 1], [50, 0]),
-          opacity: useTransform(spring, [0, 0.2, 1], [0, 0, 1]),
-        }
+        return { y: yDefault, opacity }
     }
   }
-
-  const transform = getTransform()
 
   return (
     <motion.div
       ref={ref}
-      style={{
-        ...transform,
-      }}
+      style={getTransformStyle()}
       transition={{ delay }}
       className={className}
     >
@@ -144,7 +133,6 @@ export function Typewriter({
 interface AnimatedCounterProps {
   from: number
   to: number
-  duration?: number
   className?: string
   prefix?: string
   suffix?: string
@@ -153,7 +141,6 @@ interface AnimatedCounterProps {
 export function AnimatedCounter({
   from,
   to,
-  duration = 2,
   className = '',
   prefix = '',
   suffix = '',

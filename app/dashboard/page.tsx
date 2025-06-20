@@ -1,7 +1,17 @@
-import { Users, Calendar, DollarSign, AlertCircle } from 'lucide-react'
+import {
+  Users,
+  Calendar,
+  DollarSign,
+  AlertCircle,
+  TrendingUp,
+  Clock,
+} from 'lucide-react'
 import { getDashboardStatsAction } from '@/actions/dashboard'
 import { formatCurrency } from '@/lib/utils'
 import { DevUserInfo } from '@/components/ui/DevModeIndicator'
+import AnimatedDiv, {
+  AnimatedContainer,
+} from '@/components/animations/AnimatedDiv'
 
 const defaultStats = {
   totalClients: 0,
@@ -20,110 +30,205 @@ export default async function DashboardPage() {
       title: 'Total de Clientes',
       value: stats.totalClients.toString(),
       icon: Users,
-      color: 'bg-blue-500',
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600',
     },
     {
       title: 'Clientes Ativos',
       value: stats.activeClients.toString(),
-      icon: Users,
-      color: 'bg-green-500',
+      icon: TrendingUp,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600',
     },
     {
       title: 'Receita Mensal',
       value: formatCurrency(stats.monthlyRevenue),
       icon: DollarSign,
-      color: 'bg-primary-500',
+      color: 'from-primary-500 to-primary-600',
+      bgColor: 'bg-primary-50',
+      iconColor: 'text-primary-600',
     },
     {
       title: 'Pagamentos Pendentes',
       value: stats.pendingPayments.toString(),
       icon: AlertCircle,
-      color: 'bg-orange-500',
+      color: 'from-orange-500 to-orange-600',
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600',
     },
     {
       title: 'Próximos Agendamentos',
       value: stats.upcomingAppointments.toString(),
       icon: Calendar,
-      color: 'bg-purple-500',
+      color: 'from-secondary-500 to-secondary-600',
+      bgColor: 'bg-secondary-50',
+      iconColor: 'text-secondary-600',
     },
   ]
 
   return (
-    <div>
+    <div className="space-y-8">
       {/* Informação de desenvolvimento */}
       <DevUserInfo />
 
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Visão geral dos seus negócios</p>
-      </div>
+      <AnimatedDiv animationType="fadeIn">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-2 text-gray-600">
+            Bem-vindo de volta! Aqui está o resumo dos seus negócios
+          </p>
+        </div>
+      </AnimatedDiv>
 
       {/* Stats Grid */}
-      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {statCards.map((stat) => (
-          <div key={stat.title} className="rounded-lg bg-white p-6 shadow">
-            <div className="flex items-center">
-              <div className={`${stat.color} rounded-lg p-3`}>
-                <stat.icon className="h-6 w-6 text-white" />
+      <AnimatedContainer animationType="slideUp">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {statCards.map((stat, index) => (
+            <AnimatedDiv
+              key={stat.title}
+              animationType="scale"
+              delay={index * 0.1}
+              whileHover={true}
+            >
+              <div className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600">
+                      {stat.title}
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`${stat.bgColor} rounded-lg p-3`}>
+                    <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+                  </div>
+                </div>
+                <div
+                  className={`absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r ${stat.color} origin-left scale-x-0 transform transition-transform duration-300 group-hover:scale-x-100`}
+                ></div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  {stat.title}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            </AnimatedDiv>
+          ))}
+        </div>
+      </AnimatedContainer>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Recent Activity */}
+        <AnimatedDiv animationType="slideLeft" delay={0.3}>
+          <div className="rounded-xl bg-white shadow-lg">
+            <div className="border-b border-gray-200 p-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary-100 p-2">
+                  <Clock className="h-5 w-5 text-primary-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Próximas Ações
+                </h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg bg-blue-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium text-gray-900">
+                      Agendamentos
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                    {stats.upcomingAppointments} esta semana
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-orange-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                    <span className="font-medium text-gray-900">
+                      Pagamentos
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-800">
+                    {stats.pendingPayments} pendentes
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-green-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-green-600" />
+                    <span className="font-medium text-gray-900">
+                      Clientes Ativos
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                    {stats.activeClients} clientes
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </AnimatedDiv>
 
-      {/* Recent Activity */}
-      <div className="rounded-lg bg-white shadow">
-        <div className="border-b border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Resumo</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <h3 className="text-md mb-3 font-medium text-gray-900">
-                Próximas Ações
-              </h3>
-              <ul className="space-y-2">
-                <li className="flex items-center text-sm text-gray-600">
-                  <Calendar className="mr-2 h-4 w-4 text-blue-500" />
-                  {stats.upcomingAppointments} agendamentos esta semana
-                </li>
-                <li className="flex items-center text-sm text-gray-600">
-                  <AlertCircle className="mr-2 h-4 w-4 text-orange-500" />
-                  {stats.pendingPayments} pagamentos pendentes
-                </li>
-                <li className="flex items-center text-sm text-gray-600">
-                  <Users className="mr-2 h-4 w-4 text-green-500" />
-                  {stats.activeClients} clientes ativos
-                </li>
-              </ul>
+        {/* Performance Summary */}
+        <AnimatedDiv animationType="slideRight" delay={0.4}>
+          <div className="rounded-xl bg-white shadow-lg">
+            <div className="border-b border-gray-200 p-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-secondary-100 p-2">
+                  <TrendingUp className="h-5 w-5 text-secondary-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Performance do Mês
+                </h2>
+              </div>
             </div>
-            <div>
-              <h3 className="text-md mb-3 font-medium text-gray-900">
-                Performance do Mês
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Receita:</span>
-                  <span className="font-medium text-gray-900">
+            <div className="p-6">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Receita Total</span>
+                  <span className="text-2xl font-bold text-primary-600">
                     {formatCurrency(stats.monthlyRevenue)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Novos clientes:</span>
-                  <span className="font-medium text-gray-900">
-                    {Math.max(0, stats.totalClients - stats.activeClients)}
-                  </span>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Novos Clientes</span>
+                    <span className="font-semibold text-gray-900">
+                      {Math.max(0, stats.totalClients - stats.activeClients)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Taxa de Conversão</span>
+                    <span className="font-semibold text-green-600">
+                      {stats.totalClients > 0
+                        ? Math.round(
+                            (stats.activeClients / stats.totalClients) * 100
+                          )
+                        : 0}
+                      %
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Receita Média</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.activeClients > 0
+                        ? formatCurrency(
+                            stats.monthlyRevenue / stats.activeClients
+                          )
+                        : formatCurrency(0)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </AnimatedDiv>
       </div>
     </div>
   )
